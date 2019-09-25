@@ -1,0 +1,64 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <signal.h>
+#include <string.h>
+
+#include <commun.h>
+#include <terrain.h>
+
+
+/*--------------------* 
+ * Main demon 
+ *--------------------*/
+int
+main( int nb_arg , char * tab_arg[] )
+{
+  /* Parametres */
+  char fich_terrain[128] ;
+  char nomprog[256] ;
+	struct stat info_terrain;
+	time_t derniere_modif, avt_derniere_modif;
+	int fd_terrain;
+  
+     /*----------*/
+
+  /* Capture des parametres */
+  if( nb_arg != 2 )
+    {
+      fprintf( stderr , "Usage : %s <fichier terrain>\n", 
+	       tab_arg[0] );
+      exit(-1);
+    }
+
+  strcpy( nomprog , tab_arg[0] );
+  strcpy( fich_terrain , tab_arg[1] );
+
+
+  printf("\n%s : ----- Debut de l'affichage du terrain ----- \n", nomprog );
+
+  stat(fich_terrain, &info_terrain);
+	derniere_modif = info_terrain.st_mtime;
+	fd_terrain = open(fich_terrain, O_RDONLY, 0666);
+	terrain_afficher(fd_terrain);
+	close(fd_terrain);
+
+	while (1) {
+		stat(fich_terrain, &info_terrain);
+		avt_derniere_modif = derniere_modif;
+		derniere_modif = info_terrain.st_mtime;
+		if (avt_derniere_modif != derniere_modif) {
+			fd_terrain = open(fich_terrain, O_RDONLY, 0666);
+			terrain_afficher(fd_terrain);
+			close(fd_terrain);
+		}
+	}
+  
+  printf("\n%s : --- Arret de l'affichage du terrain ---\n", nomprog );
+
+  exit(0);
+}
