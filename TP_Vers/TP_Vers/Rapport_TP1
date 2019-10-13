@@ -1,0 +1,15 @@
+verDeTerre.c : le programme commence par verrouiller la case correspondant à la tête du ver juste après que celle-ci ait été créée.
+Ensuite pour chaque déplacement du ver : 
+- on recherche une case libre
+- si on en trouve une, on vérifie qu'un autre processus n'a pas déjà verrouillé cette case
+- si la case n'est pas verrouillée, on la verrouille en levant d'abord l'ancien verrou
+- on écrit sur la case qui vient d'être verrouillée
+- on met à jour la tête du ver
+Pendant tout le programme, on ne verrouille que la tête du ver pour éviter qu'un ver n'écrase la tête d'un autre ver.
+Pas la peine de verrouiller les voisins.
+Les verrous utilisés sont des verrous exclusifs non-bloquants. En effet, si on veut écrire à un endroit déjà verrouillé, il est mieux de simplement recommencer la recherche d'une autre case libre vu qu'elle est recherchée aléatoirement.
+
+vision.c : Le programme compare la date de dernier accès au fichier terrain à la date de dernière modification. Si elles sont identiques, c'est que le fichier a été modifié au dernier accès, on affiche le terrain.
+
+Note : le script shell a été modifié pour initialiser le terrain à chaque fois avec des dimensions précisées en ligne de commande, et pour exécuter le fichier vision à chaque nouveau lancer de processus. Le fichier verDeTerre demande maintenant 4 paramètres, dans l'ordre : fichier terrain, longueur, largeur, marque. De cette manière il suffit simplement de lancer la commande : ./lancer_vers.sh <terrain> <longueur> <largeur> <nombre de vers>.
+
