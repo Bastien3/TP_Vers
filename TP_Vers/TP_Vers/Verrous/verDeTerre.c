@@ -96,7 +96,10 @@ int main(int nb_arg, char * tab_arg[]) {
 	verrou.l_len = 1;
 	verrou.l_pid = ver->pid;
 
-	fcntl(fd_terrain, F_SETLK, &verrou);
+	if ((no_err = fcntl(fd_terrain, F_SETLK, &verrou))) {
+		fprintf(stderr, "Echec dans la pose du verrou à la position %d.\n", (int)liste_voisins[ind_libre].pos);
+		exit(no_err);
+	}
 
 	if ((no_err = terrain_marque_ecrire(fd_terrain, ver->tete, marque))) {
 		fprintf( stderr, "%s : erreur %d dans terrain_marque_ecrire\n", nomprog, no_err);
@@ -135,39 +138,44 @@ int main(int nb_arg, char * tab_arg[]) {
 		   	printf( "Pas de case voisine libre\n");
 		else
 	  	 	printf("Ecriture dans la case libre choisie ==> %d\n", ind_libre );*/
-	
-		/* Avant d'écrire dans la case trouvée, on vérifie qu'il n'y a pas un verrou sur cette case */
-		verrou_verif.l_type = F_WRLCK;
-		verrou_verif.l_whence = 0;
-		verrou_verif.l_start = liste_voisins[ind_libre].pos;
-		verrou_verif.l_len = 1;
-		fcntl(fd_terrain, F_GETLK, &verrou_verif);
 
-		/* Si on peut, on écrit */
-		if (verrou_verif.l_type == F_UNLCK) {
-		   	if ((no_err = terrain_marque_ecrire(fd_terrain, liste_voisins[ind_libre], marque))) {
-				fprintf(stderr, "%s : erreur %d dans terrain_marque_ecrire\n", nomprog, no_err);
-				exit(no_err) ;
-		  	 }
+		/* Si on a trouvé une case libre */
+		if (ind_libre != -1) {
+			/* Avant d'écrire dans la case trouvée, on vérifie qu'il n'y a pas un verrou sur cette case */
+			verrou_verif.l_type = F_WRLCK;
+			verrou_verif.l_whence = 0;
+			verrou_verif.l_start = liste_voisins[ind_libre].pos;
+			verrou_verif.l_len = 1;
+			fcntl(fd_terrain, F_GETLK, &verrou_verif);
+
+			/* Si on peut, on verrouille d'abord la case à écrire */
+			if (verrou_verif.l_type == F_UNLCK) {
+
+				/* Levée du verrou existant */
+				verrou.l_type = F_UNLCK;
+				fcntl(fd_terrain, F_SETLK, &verrou);
+
+				/* Pose du nouveau verrou */
+				verrou.l_type = F_WRLCK;
+				verrou.l_whence = 0;
+				verrou.l_start = liste_voisins[ind_libre].pos;
+				verrou.l_len = 1;
+				verrou.l_pid = ver->pid;
+				if ((no_err = fcntl(fd_terrain, F_SETLK, &verrou))) {
+					fprintf(stderr, "Echec dans la pose du verrou à la position %d.\n", (int)liste_voisins[ind_libre].pos);
+					exit(no_err);
+				}
+
+				/* Ecriture de la tête du ver à la nouvelle position */
+			   	if ((no_err = terrain_marque_ecrire(fd_terrain, liste_voisins[ind_libre], marque))) {
+					fprintf(stderr, "%s : erreur %d dans terrain_marque_ecrire\n", nomprog, no_err);
+					exit(no_err) ;
+			  	 }
+
+				/* Mise à jour de la tête du ver */
+				ver->tete = liste_voisins[ind_libre];
+			}	
 		}
-
-		/* Mise à jour de la tête du ver */
-		ver->tete = liste_voisins[ind_libre];
-
-		/* Mise à jour du verrou */
-
-		/* Levée du verrou existant */
-		verrou.l_type = F_UNLCK;
-		fcntl(fd_terrain, F_SETLK, &verrou);
-
-		/* Pose du nouveau verrou */
-		verrou.l_type = F_WRLCK;
-		verrou.l_whence = 0;
-		verrou.l_start = ver->tete.pos;
-		verrou.l_len = 1;
-		verrou.l_pid = ver->pid;
-
-		fcntl(fd_terrain, F_SETLK, &verrou);
 	}
 
 	/* Levée du verrou */
