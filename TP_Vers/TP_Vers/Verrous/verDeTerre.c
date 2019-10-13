@@ -97,7 +97,7 @@ int main(int nb_arg, char * tab_arg[]) {
 	verrou.l_pid = ver->pid;
 
 	if ((no_err = fcntl(fd_terrain, F_SETLK, &verrou))) {
-		fprintf(stderr, "Echec dans la pose du verrou à la position %d.\n", (int)liste_voisins[ind_libre].pos);
+		fprintf(stderr, "Echec dans la pose du verrou à la position %d.\n", ver->tete.pos);
 		exit(no_err);
 	}
 
