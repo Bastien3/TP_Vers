@@ -13,12 +13,19 @@ include $(top_dir)/Makefile.compilation
 # Object files
 #
 
-fich_obj_verDeTerre = verDeTerre.o $(terrain_dir)/terrain.o $(commun_dir)/jeu.o
-fich_obj_vision = vision.o $(terrain_dir)/terrain.o
+fich_obj_verDeTerre = verDeTerre.o \
+	$(commun_dir)/jeu.o $(commun_dir)/coord.o \
+	$(terrain_dir)/terrain.o \
+	$(vers_dir)/ver.o
+
+fich_obj_vision = vision.o \
+	$(terrain_dir)/terrain.o
 
 #
 #-------- Mains ---------------
 #
+
+BIN = verDeTerre vision
 
 verDeTerre : $(fich_obj_verDeTerre)
 	$(CCLNK) $(fich_obj_verDeTerre) $(FLAGS) -o verDeTerre -I$(commun_dir) -I$(terrain_dir)
@@ -40,9 +47,17 @@ vision.o : vision.c $(commun_dir)/commun.h $(terrain_dir)/terrain.h
 #
 #-------- Modules -------------
 #
+$(commun_dir)/jeu.o :
+	cd $(commun_dir) ; make -f Makefile jeu.o
+
+$(commun_dir)/coord.o :
+	cd $(commun_dir) ; make -f Makefile coord.o
 
 $(terrain_dir)/terrain.o : 
-	cd $(terrain_dir) ; make -f Makefile terrain.o 
+	cd $(terrain_dir) ; make -f Makefile terrain.o
+
+$(vers_dir)/ver.o :
+	cd $(vers_dir) ; make -f Makefile ver.o
 
 #
 #-------- Headers -------------
@@ -52,7 +67,8 @@ $(terrain_dir)/terrain.o :
 #-------- Clean objects -------
 #
 
-clean : 
+clean :
+	- rm $(BIN)
 	- rm  *.o  *~ 
 
 

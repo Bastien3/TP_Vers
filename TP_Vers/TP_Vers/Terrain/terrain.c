@@ -109,8 +109,7 @@ terrain_initialiser( const char * fich_terrain , int nb_lig , int nb_col )
      /*----------*/
 
 #ifdef _DEBUG_ 
-     printf("terrain_init --> debut initialisation aire de jeu %s[%d,%d]\n", 
-	    fich_terrain , nb_lig , nb_col );
+     //printf("terrain_init --> debut initialisation aire de jeu %s[%d,%d]\n", fich_terrain , nb_lig , nb_col );
 #endif
 
      /* 
@@ -323,11 +322,11 @@ terrain_case_libre_rechercher( const int fd ,
      }
 
      /* 
-      * Sinon parcours cyclique de la liste 
+      * Sinon parcours aléatoire de la liste 
       */
 	  
      debut = ind_voisin ;
-     ind_voisin = (ind_voisin+1) % nb_voisins ;
+     ind_voisin = (ind_voisin + 1) % nb_voisins ;
      trouve = FAUX ;
      while( (ind_voisin != debut) && (! trouve) )
      {
@@ -352,7 +351,7 @@ terrain_case_libre_rechercher( const int fd ,
 	  }
 	  else
 	  {
-	       ind_voisin=(ind_voisin+1)%nb_voisins ;
+	      	ind_voisin = (ind_voisin + 1) % nb_voisins ;
 	  }
      }
 
