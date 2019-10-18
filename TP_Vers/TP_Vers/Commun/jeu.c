@@ -41,7 +41,7 @@ int jeu_ver_initialiser( const int fd_terrain, /* Fichier terrain */
 	  terrain_xy2pos(fd_terrain, ver->tete.x, ver->tete.y , &(ver->tete.pos) ) ;
 
 #ifdef _DEBUG_ 
-	  //printf("jeu_ver_initialiser --> examen case[%d,%d](%lld)\n", ver->tete.y , ver->tete.x , (long long)ver->tete.pos );
+	  printf("jeu_ver_initialiser --> examen case[%d,%d](%lld)\n", ver->tete.y , ver->tete.x , (long long)ver->tete.pos );
 #endif
 
 	  /* Lecture de la case de la position initiale */
@@ -69,7 +69,6 @@ int jeu_ver_initialiser( const int fd_terrain, /* Fichier terrain */
 	       cpt_cases++ ;
 	  }
      }
-     
      if( trouve )
 	  return(CORRECT);
      else
