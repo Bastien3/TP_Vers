@@ -11,6 +11,8 @@
 #include <jeu.h>
 #include <errno.h>
 
+
+
 /* NOTE : tous les affichages sont commentés pour ne garder que l'affichage du terrain géré par vision */
 
 int main(int nb_arg, char * tab_arg[]) {
@@ -97,7 +99,7 @@ int main(int nb_arg, char * tab_arg[]) {
 	verrou.l_pid = ver->pid;
 
 	if ((no_err = fcntl(fd_terrain, F_SETLK, &verrou))) {
-		fprintf(stderr, "Echec dans la pose du verrou à la position %d.\n", ver->tete.pos);
+		fprintf(stderr, "Echec dans la pose du verrou à la position %d.\n", (int)ver->tete.pos);
 		exit(no_err);
 	}
 
