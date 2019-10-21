@@ -23,38 +23,43 @@ int nb_col;
 vers_t * liste_vers;
 case_t marque = 'A';
 
+/* Crée un ver avec le pid du processus qui a créé le signal, une marque et l'ajoute à la liste des vers */
 static void handler_initialiser_ver (int signal, siginfo_t *info_signal, void *contexte) {
 
-	/*pid_t pid_ver = info_signal->si_pid;
+	pid_t pid_ver = info_signal->si_pid;
 	ver_t * ver = malloc(sizeof(ver_t));
 	ver->marque = marque;
 	marque++;
 	
+	/* Ouverture du terrain */
 	if((fd_terrain = open( fich_terrain , O_RDWR , 0644 )) == -1) {
 		fprintf( stderr, "%s : Pb open sur %s\n", Nom_Prog , fich_terrain);
 		exit(-1);
 	}
-	printf(" Terrain initialise: \n");
-
+	
+	/* Initialisation du ver */
 	if ((jeu_ver_initialiser(fd_terrain, nb_lig, nb_col, ver) == -1)) {
 		fprintf(stderr, "%s : erreur %d dans jeu_ver_initialiser\n", Nom_Prog, -1);
 		exit(-1) ;
 	}
 
+	/* Attribution du pid au ver */
 	ver_pid_set(ver, pid_ver);
 	
+	/* Ajout du vers à la liste */
 	if (vers_ver_add(liste_vers, *ver) == -1) {
 		fprintf( stderr, "Problème d'ajout du ver %d", (int)pid_ver);
 		exit(-1);
 	}
 
-	close(fd_terrain);*/
-	printf("Initialiser ver\n");
+	close(fd_terrain);
 }
 
+/* Récupère le ver de la liste des vers en fonction de son pid, recherche une case vide, déplace le vers à cette case et affiche le terrain */
 static void handler_terrain_rechercher (int signal, siginfo_t *info_signal, void *contexte) {
 
-	/*pid_t pid_ver = info_signal->si_pid;
+	/* Identification du ver qui accède au terrain par son pid */
+	pid_t pid_ver = info_signal->si_pid;
 	printf("pid vers : %d\n", (int)pid_ver);
 	int numero_ver = vers_pid_seek(liste_vers, pid_ver);
 	printf("numero ver : %d\n", numero_ver);
@@ -63,52 +68,45 @@ static void handler_terrain_rechercher (int signal, siginfo_t *info_signal, void
 	int nb_voisins = 0 ;
 	int ind_libre = 0 ;
 
+	/* Ouverture du terrain */
 	if((fd_terrain = open( fich_terrain , O_RDWR , 0644 )) == -1) {
 		fprintf( stderr, "%s : Pb open sur %s\n", Nom_Prog , fich_terrain);
 		exit(-1);
 	}
 
+	/* Liste des voisins */
 	if((terrain_voisins_rechercher(fd_terrain, ver.tete, &liste_voisins, &nb_voisins) == -1)) {
 	 	fprintf(stderr, "%s : erreur %d dans terrain_voisins_rechercher\n", Nom_Prog, -1);
 	   	exit(-1) ;
 	}
 
+	/* Recherche d'une case libre */
 	if ((terrain_case_libre_rechercher( fd_terrain, liste_voisins, nb_voisins, &ind_libre) == -1)) {
 	  	 fprintf(stderr, "%s : erreur %d dans terrain_case_libre_rechercher\n", Nom_Prog, -1);
 		 exit(-1) ;
 	}
 
+	/* Ecriture dans cette case libre */
 	if ((terrain_marque_ecrire(fd_terrain, ver.tete, ver.marque) == -1)) {
 		fprintf( stderr, "%s : erreur %d dans terrain_marque_ecrire\n", Nom_Prog, -1);
 		exit(-1) ;
 	}
 
+	/* Mise à jour du ver */
 	ver.tete = liste_voisins[ind_libre];
 	if (vers_ver_set(liste_vers, numero_ver, ver) == -1) {
 		fprintf( stderr, "Problème de mise à jour du ver %d", (int)pid_ver);
 		exit(-1);
 	}
-	close(fd_terrain);*/
-	printf("Terrain rechercher\n");
-	kill(getpid(), SIGRTMIN);
 
-}
-
-static void handler_terrain_afficher (int signal, siginfo_t *info_signal, void *contexte) {
-
-	/*if((fd_terrain = open( fich_terrain , O_RDONLY , 0644 )) == -1) {
-		fprintf( stderr, "%s : Pb open sur %s\n", Nom_Prog , fich_terrain);
-		exit(-1);
-	}
-	
-	printf("Affichage du terrain : ");
+	/* Affichage du terrain */
 	if ((terrain_afficher(fd_terrain) == -1)) {
 		fprintf( stderr, "%s : erreur %d dans terrain_afficher\n", Nom_Prog, -1);
 		exit(-1) ;
 	}
-	sleep(1);
-	close(fd_terrain);*/
-	printf("Terrain afficher\n");
+	close(fd_terrain);
+	//printf("Terrain rechercher\n");
+
 }
 
 
@@ -154,17 +152,14 @@ main( int nb_arg , char * tab_arg[] )
 	action.sa_flags = SA_SIGINFO | SA_RESTART;
 	action.sa_sigaction = handler_initialiser_ver;
 	sigemptyset(&action.sa_mask);
-	sigaction(SIGRTMIN+2, &action, NULL);
+	sigaddset(&action.sa_mask, SIGUSR2);
+	sigaction(SIGUSR1, &action, NULL);
 
-	action.sa_flags = SA_SIGINFO | SA_RESTART;
+	action.sa_flags = SA_SIGINFO | SA_RESTART | SA_NODEFER;
 	action.sa_sigaction = handler_terrain_rechercher;
 	sigemptyset(&action.sa_mask);
-	sigaction(SIGRTMIN+1, &action, NULL);
-
-	action.sa_flags = SA_SIGINFO | SA_RESTART;
-	action.sa_sigaction = handler_terrain_afficher;
-	sigemptyset(&action.sa_mask);
-	sigaction(SIGRTMIN, &action, NULL);
+	sigaddset(&action.sa_mask, SIGUSR1);
+	sigaction(SIGUSR2, &action, NULL);
 
 	sleep(60);
 
