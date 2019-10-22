@@ -53,14 +53,11 @@ main( int nb_arg , char * tab_arg[] )
 	printf( "\n\n--- Debut ver [%d] ---\n\n" , pid_ver );   
 
 	kill(pid_aire, SIGUSR1); /* Signal pour initialiser un ver */
-	kill(pid_aire, SIGUSR2);
-	kill(pid_aire, SIGUSR1); 
-	kill(pid_aire, SIGUSR2);
-	kill(pid_aire, SIGUSR2);
 
 	for( v=0 ; v < nb_lig * nb_col ; v++) { /* Un ver peut se déplacer au maximum nb_lig * nb_col fois */
 
-		kill(pid_aire, SIGUSR2); /* Signal pour déplacer un ver */	
+		kill(pid_aire, SIGUSR2); /* Signal pour déplacer un ver */
+		sleep(1);	
 	}
 
 	printf( "\n\n--- Arret ver [%d] ---\n\n" , pid_ver );

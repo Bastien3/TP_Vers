@@ -51,7 +51,7 @@ static void handler_initialiser_ver (int signal, siginfo_t *info_signal, void *c
 		fprintf( stderr, "Problème d'ajout du ver %d", (int)pid_ver);
 		exit(-1);
 	}
-
+	vers_printf(liste_vers);
 	close(fd_terrain);
 }
 
@@ -105,8 +105,6 @@ static void handler_terrain_rechercher (int signal, siginfo_t *info_signal, void
 		exit(-1) ;
 	}
 	close(fd_terrain);
-	//printf("Terrain rechercher\n");
-
 }
 
 
@@ -149,21 +147,25 @@ main( int nb_arg , char * tab_arg[] )
 
 	printf("\n\t----- %s : Debut du jeu -----\n\n" , Nom_Prog );
 
-	action.sa_flags = SA_SIGINFO | SA_RESTART;
+	/* Handler initialiser_vers pour signal SIGUSR1 */
+	action.sa_flags = SA_SIGINFO;
 	action.sa_sigaction = handler_initialiser_ver;
 	sigemptyset(&action.sa_mask);
 	sigaddset(&action.sa_mask, SIGUSR2);
 	sigaction(SIGUSR1, &action, NULL);
 
-	action.sa_flags = SA_SIGINFO | SA_RESTART | SA_NODEFER;
+	/* Handler initialiser_vers pour signal SIGUSR1 */
+	action.sa_flags = SA_SIGINFO | SA_NODEFER;
 	action.sa_sigaction = handler_terrain_rechercher;
 	sigemptyset(&action.sa_mask);
 	sigaddset(&action.sa_mask, SIGUSR1);
 	sigaction(SIGUSR2, &action, NULL);
 
-	sleep(60);
+	while(1);
 
 	printf("\n\n\t----- %s : Fin du jeu -----\n\n" , Nom_Prog );
+
+	vers_destroy(&liste_vers);
 
 	exit(0);
 }
