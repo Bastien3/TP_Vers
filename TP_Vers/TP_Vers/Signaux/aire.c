@@ -40,6 +40,7 @@ static void handler_initialiser_ver (int signal, siginfo_t *info_signal, void *c
 	/* Initialisation du ver */
 	if ((jeu_ver_initialiser(fd_terrain, nb_lig, nb_col, ver) == -1)) {
 		fprintf(stderr, "%s : erreur %d dans jeu_ver_initialiser\n", Nom_Prog, -1);
+		close(fd_terrain);
 		exit(-1) ;
 	}
 
@@ -49,6 +50,7 @@ static void handler_initialiser_ver (int signal, siginfo_t *info_signal, void *c
 	/* Ajout du vers à la liste */
 	if (vers_ver_add(liste_vers, *ver) == -1) {
 		fprintf( stderr, "Problème d'ajout du ver %d", (int)pid_ver);
+		close(fd_terrain);
 		exit(-1);
 	}
 	vers_printf(liste_vers);
@@ -69,42 +71,65 @@ static void handler_terrain_rechercher (int signal, siginfo_t *info_signal, void
 	int ind_libre = 0 ;
 
 	/* Ouverture du terrain */
-	if((fd_terrain = open( fich_terrain , O_RDWR , 0644 )) == -1) {
+	if ((fd_terrain = open( fich_terrain , O_RDWR , 0644 )) == -1) {
 		fprintf( stderr, "%s : Pb open sur %s\n", Nom_Prog , fich_terrain);
 		exit(-1);
 	}
 
 	/* Liste des voisins */
-	if((terrain_voisins_rechercher(fd_terrain, ver.tete, &liste_voisins, &nb_voisins) == -1)) {
+	if ((terrain_voisins_rechercher(fd_terrain, ver.tete, &liste_voisins, &nb_voisins) == -1)) {
 	 	fprintf(stderr, "%s : erreur %d dans terrain_voisins_rechercher\n", Nom_Prog, -1);
+		close(fd_terrain);
 	   	exit(-1) ;
 	}
 
 	/* Recherche d'une case libre */
 	if ((terrain_case_libre_rechercher( fd_terrain, liste_voisins, nb_voisins, &ind_libre) == -1)) {
-	  	 fprintf(stderr, "%s : erreur %d dans terrain_case_libre_rechercher\n", Nom_Prog, -1);
-		 exit(-1) ;
-	}
-
-	/* Ecriture dans cette case libre */
-	if ((terrain_marque_ecrire(fd_terrain, ver.tete, ver.marque) == -1)) {
-		fprintf( stderr, "%s : erreur %d dans terrain_marque_ecrire\n", Nom_Prog, -1);
+	  	fprintf(stderr, "%s : erreur %d dans terrain_case_libre_rechercher\n", Nom_Prog, -1);
+		close(fd_terrain);
 		exit(-1) ;
 	}
 
-	/* Mise à jour du ver */
-	ver.tete = liste_voisins[ind_libre];
-	if (vers_ver_set(liste_vers, numero_ver, ver) == -1) {
-		fprintf( stderr, "Problème de mise à jour du ver %d", (int)pid_ver);
-		exit(-1);
-	}
+	if (ind_libre == -1) {
 
-	/* Affichage du terrain */
-	if ((terrain_afficher(fd_terrain) == -1)) {
-		fprintf( stderr, "%s : erreur %d dans terrain_afficher\n", Nom_Prog, -1);
-		exit(-1) ;
-	}
-	close(fd_terrain);
+		/* Cas où plus de case libre */
+		fprintf(stderr, "Plus de case libre pour %d, arrêt.\n", (int)pid_ver);
+		vers_ver_del(liste_vers, numero_ver);
+		close(fd_terrain);
+		kill(pid_ver, SIGSTOP);
+
+		/* Il n'y a plus de vers dans la liste */
+		if (liste_vers->nb == 0) {
+			printf("Plus de vers actifs.\n");
+			vers_destroy(&liste_vers);
+			exit(0);
+		}
+	} else {
+
+		/* Ecriture dans cette case libre */
+		if ((terrain_marque_ecrire(fd_terrain, ver.tete, ver.marque) == -1)) {
+			fprintf( stderr, "%s : erreur %d dans terrain_marque_ecrire\n", Nom_Prog, -1);
+			close(fd_terrain);
+			exit(-1) ;
+		}
+
+		/* Mise à jour du ver */
+		ver.tete = liste_voisins[ind_libre];
+		if (vers_ver_set(liste_vers, numero_ver, ver) == -1) {
+			fprintf( stderr, "Problème de mise à jour du ver %d", (int)pid_ver);
+			close(fd_terrain);
+			exit(-1);
+		}
+
+		/* Affichage du terrain */
+		if ((terrain_afficher(fd_terrain) == -1)) {
+			fprintf( stderr, "%s : erreur %d dans terrain_afficher\n", Nom_Prog, -1);
+			close(fd_terrain);
+			exit(-1) ;
+		}
+		close(fd_terrain);
+	 }
+	kill(pid_ver, SIGALRM); /* permet au ver de reprendre */
 }
 
 
@@ -155,7 +180,7 @@ main( int nb_arg , char * tab_arg[] )
 	sigaction(SIGUSR1, &action, NULL);
 
 	/* Handler initialiser_vers pour signal SIGUSR1 */
-	action.sa_flags = SA_SIGINFO | SA_NODEFER;
+	action.sa_flags = SA_SIGINFO;
 	action.sa_sigaction = handler_terrain_rechercher;
 	sigemptyset(&action.sa_mask);
 	sigaddset(&action.sa_mask, SIGUSR1);

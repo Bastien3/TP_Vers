@@ -14,14 +14,12 @@
 #include <jeu.h>
 #include <errno.h>
 
+int peut_reprendre = 0;
 
-/* 
- * VARIABLES GLOBALES (utilisees dans les handlers)
- */
+static void handler_peut_reprendre (int signal) {
 
-/*
- * HANDLERS
- */
+	peut_reprendre = 1;
+}
 
 int
 main( int nb_arg , char * tab_arg[] )
@@ -34,6 +32,8 @@ main( int nb_arg , char * tab_arg[] )
 
 	int nb_lig;
 	int nb_col;
+
+	struct sigaction action;
 
 	/* Capture des parametres */
 	if (nb_arg != 4) {
@@ -49,6 +49,11 @@ main( int nb_arg , char * tab_arg[] )
 	/* Initialisation de la generation des nombres pseudo-aleatoires */
 	srandom((unsigned int)getpid());
 
+	action.sa_flags = 0;
+	action.sa_handler = handler_peut_reprendre;
+	sigemptyset(&action.sa_mask);
+	sigaction(SIGALRM, &action, NULL);
+
 	pid_ver = getpid() ; 
 	printf( "\n\n--- Debut ver [%d] ---\n\n" , pid_ver );   
 
@@ -57,7 +62,10 @@ main( int nb_arg , char * tab_arg[] )
 	for( v=0 ; v < nb_lig * nb_col ; v++) { /* Un ver peut se déplacer au maximum nb_lig * nb_col fois */
 
 		kill(pid_aire, SIGUSR2); /* Signal pour déplacer un ver */
-		sleep(1);	
+		sleep(1);
+		while (!peut_reprendre); /* fait patienter le ver tant que aire n'a pas fini d'écrire */
+		peut_reprendre = 0;	 /* évite d'avoir plein de signaux lancés d'un coup */	
+					/* !!! A DEBUGGER !!! */
 	}
 
 	printf( "\n\n--- Arret ver [%d] ---\n\n" , pid_ver );
