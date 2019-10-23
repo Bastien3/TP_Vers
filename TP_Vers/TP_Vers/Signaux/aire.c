@@ -129,7 +129,7 @@ static void handler_terrain_rechercher (int signal, siginfo_t *info_signal, void
 		}
 		close(fd_terrain);
 	 }
-	kill(pid_ver, SIGALRM); /* permet au ver de reprendre */
+	//kill(pid_ver, SIGALRM); /* permet au ver de reprendre */
 }
 
 

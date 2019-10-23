@@ -49,6 +49,7 @@ main( int nb_arg , char * tab_arg[] )
 	/* Initialisation de la generation des nombres pseudo-aleatoires */
 	srandom((unsigned int)getpid());
 
+	/* Signal qui permet au vers de reprendre */
 	action.sa_flags = 0;
 	action.sa_handler = handler_peut_reprendre;
 	sigemptyset(&action.sa_mask);
@@ -59,13 +60,14 @@ main( int nb_arg , char * tab_arg[] )
 
 	kill(pid_aire, SIGUSR1); /* Signal pour initialiser un ver */
 
+	/* PROBLEME ACTUEL : les vers ne s'arrêtent pas une fois qu'ils ne peuvent plus se déplacer malgré le signal SIGSTOP envoyé par aire */
 	for( v=0 ; v < nb_lig * nb_col ; v++) { /* Un ver peut se déplacer au maximum nb_lig * nb_col fois */
 
 		kill(pid_aire, SIGUSR2); /* Signal pour déplacer un ver */
 		sleep(1);
-		while (!peut_reprendre); /* fait patienter le ver tant que aire n'a pas fini d'écrire */
-		peut_reprendre = 0;	 /* évite d'avoir plein de signaux lancés d'un coup */	
-					/* !!! A DEBUGGER !!! */
+		//while (!peut_reprendre); /* fait patienter le ver tant que aire n'a pas fini d'écrire */
+		//peut_reprendre = 0;	  /* évite d'avoir plein de signaux lancés d'un coup */	
+					  /* problème : le premier ver monopolise le fichier aire tant qu'il peut se déplacer */
 	}
 
 	printf( "\n\n--- Arret ver [%d] ---\n\n" , pid_ver );
