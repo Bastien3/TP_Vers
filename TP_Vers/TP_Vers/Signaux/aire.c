@@ -101,6 +101,7 @@ static void handler_terrain_rechercher (int signal, siginfo_t *info_signal, void
 		/* Il n'y a plus de vers dans la liste */
 		if (liste_vers->nb == 0) {
 			printf("Plus de vers actifs.\n");
+			printf("Vers %c gagnant.\n", ver.marque);
 			vers_destroy(&liste_vers);
 			exit(0);
 		}
